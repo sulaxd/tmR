@@ -1,0 +1,299 @@
+---
+title: "文字資料探勘實作"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+install the necessary packages.
+```{}
+install.packages("ngram")
+install.packages("jiebaR")
+install.packages("SnowballC")
+install.packages("tm")
+install.packages("wordcloud")
+install.packages("devtools")
+devtools::install_github("jbkunst/d3wordcloud")
+devtools::install_github('adymimos/rWordCloud')
+```
+
+
+
+## Tokenization example for English(1) 
+
+Assign the strings to objects that from wiki.apple 1 to 4
+```{r}
+wiki.apple1 <- "Apple Inc. is an American multinational technology company headquartered in Cupertino, California, that designs, develops, and sells consumer electronics, computer software, and online services. Its hardware products include the iPhone smartphone, the iPad tablet computer, the Mac personal computer, the iPod portable media player, and the Apple Watch smartwatch. Apple's consumer software includes the OS X and iOS operating systems, the iTunes media player, the Safari web browser, and the iLife and iWork creativity and productivity suites. Its online services include the iTunes Store, the iOS App Store and Mac App Store, and iCloud."
+
+wiki.apple2 <- "Apple was founded by Steve Jobs, Steve Wozniak, and Ronald Wayne on April 1, 1976, to develop and sell personal computers.[5] It was incorporated as Apple Computer, Inc. on January 3, 1977, and was renamed as Apple Inc. on January 9, 2007, to reflect its shifted focus toward consumer electronics. Apple (NASDAQ: AAPL) joined the Dow Jones Industrial Average on March 19, 2015.[6]"
+
+wiki.apple3 <- "Apple is the world's largest information technology company by revenue, the world's largest technology company by total assets,[7] and the world's second-largest mobile phone manufacturer.[8] On November 25, 2014, in addition to being the largest publicly traded corporation in the world by market capitalization, Apple became the first U.S. company to be valued at over US$700 billion.[9] The company employs 115,000 permanent full-time employees as of July 2015[4] and maintains 453 retail stores in sixteen countries as of March 2015;[1] it operates the online Apple Store and iTunes Store, the latter of which is the world's largest music retailer."
+
+wiki.apple4 <- "Apple's worldwide annual revenue totaled $233 billion for the fiscal year ending in September 2015.[3] The company enjoys a high level of brand loyalty and, according to the 2014 edition of the Interbrand Best Global Brands report, is the world's most valuable brand with a valuation of $118.9 billion.[10] By the end of 2014, the corporation continued to receive significant criticism regarding the labor practices of its contractors and its environmental and business practices, including the origins of source materials."
+
+```
+---
+
+Remove the punctuation and numbers.
+```{r}
+wiki.apple1 <- gsub("[[:punct:]]","",wiki.apple1)
+wiki.apple2 <- gsub("[[:punct:]]","",wiki.apple2)
+wiki.apple3 <- gsub("[[:punct:]]","",wiki.apple3)
+wiki.apple4 <- gsub("[[:punct:]]","",wiki.apple4)
+
+wiki.apple1 <- gsub("[0-9]","",wiki.apple1)
+wiki.apple2 <- gsub("[0-9]","",wiki.apple2)
+wiki.apple3 <- gsub("[0-9]","",wiki.apple3)
+wiki.apple4 <- gsub("[0-9]","",wiki.apple4)
+```
+---
+
+```{r}
+wiki.apple1
+wiki.apple2
+wiki.apple3
+wiki.apple4
+```
+---
+
+It's not good idea that did every same action 4 times. <br>
+Put it in a ***Vector***. <br>
+```{r}
+wiki.apple.vec <- c(wiki.apple1,
+                    wiki.apple2,
+                    wiki.apple3,
+                    wiki.apple4)
+
+```
+```{r, echo=FALSE}
+print(wiki.apple.vec)
+```
+
+---
+
+Remove the surplus white-space and convert strings to lowercase.
+```{r}
+wiki.apple.vec <- gsub(" {2,}","",wiki.apple.vec)
+wiki.apple.vec <- tolower(wiki.apple.vec)
+```
+---
+
+Split the strings with white-space.
+Notice: After strsplit, the class(類型) of output is a list.
+```{r}
+wiki.apple.list <- strsplit(wiki.apple.vec, " ")
+```
+```{r, echo=FALSE}
+wiki.apple.list
+```
+---
+
+Tokenization where n-grams are extracted is also useful. N-grams are sequences of words. So a 2-gram would be two words together.
+```{r}
+library(ngram)
+ng <- ngram(wiki.apple1, n=2)
+get.ngrams(ng)
+```
+---
+
+### Tokenization example for Chinese(2)
+自然語言處理的其中一個重要環節就是中文斷詞的處理，比起英文斷詞，中文斷詞在先天上就比較難處理，比如電 <br>
+腦要怎麼知道「全台大停電」要斷詞成「全台 / 大 / 停電」呢？如果是英文「Power outage all over Taiwan」，<br>
+就可以直接用空白斷成「Power / outage / all / over / Taiwan」(截錄至： http://blog.fukuball.com/)
+
+---
+
+先將字串資料賦值至new.zhTW與news.zhCN
+```{r}
+news.zhTW <- "美國最新飲食指南首度訂出健康成人咖啡攝取量，建議有喝咖啡習慣的人可喝黑咖啡，或在咖啡中添加低脂牛奶，但不建議額外添加糖或奶精。至於平日沒有喝咖啡習慣的人，是否需要現在開始喝咖啡？衛福部國健署昨天表示「不建議」。"
+
+news.zhCN <- "凤凰科技讯 北京时间2月19日消息，据《今日美国》网络版报道，苹果刚刚推出了新的以旧换新计划，以便于部分用户使用他们的老款iPhone置换新机型。而且，苹果目前接受的以旧换新手机包括Android手机、Windows Phone手机以及iPhone。"
+```
+---
+
+透過結巴R的套件，以默認的斷詞引擎進行斷詞。
+```{r}
+library(jiebaR)
+mixseg = worker()
+segment(news.zhTW, mixseg)
+segment(news.zhCN, mixseg)
+```
+---
+
+以標注詞性的斷詞引擎進行斷詞。<br>
+詞性標注對照 https://gist.github.com/luw2007/6016931
+```{r}
+
+tagseg = worker('tag')
+segment(news.zhTW, tagseg)
+segment(news.zhCN, tagseg)
+```
+---
+
+### Stemming example with R
++ 使用SnowballC套件來處理Stemming
++ 使用tm套件處理Completion
+
+```{r}
+library(SnowballC)
+library(tm)
+test <- wordStem(wiki.apple.list[[1]], language = "english")
+(test <- stemCompletion(test,dictionary=Corpus(VectorSource(wiki.apple.list)), type="shortest"))
+```
+---
+
+
+```{r, echo=FALSE}
+# 以迴圈的方式將list中的每個字串向量都stemming
+wiki.apple.list.dict <- wiki.apple.list
+wiki.apple.list <- lapply(wiki.apple.list, wordStem, language = "english")
+wiki.apple.list <- lapply(wiki.apple.list, function(u)
+  stemCompletion(u,dictionary=Corpus(VectorSource(wiki.apple.list.dict)), type="shortest"))
+```
+
+### 中文詞庫擴充
+「全台大停電」要斷詞成「全 / 台大 / 停電」 ，還是「全台 / 大 / 停電」，依需求而定。 <br>
+以電腦邏輯，若程式自動判斷為前者可能性高，這時則需人工擴充詞庫。
+
++ 透過edit_dict函數，可編輯結巴R的**使用者自定義詞庫**
++ 透過USERPATH可取得**使用者自定義詞庫**的路徑
++ 修改完成後，重新載入斷詞引擎
+```{r}
+# edit_dict()
+USERPATH
+# dict.fix <- read.csv(USERPATH, header = F, stringsAsFactors = F)
+# write.table(data.frame(c(dict.fix[,1], "全台大")), row.names = F, col.names = F, quote = F, file = USERPATH)
+mixseg = worker()
+segment("全台大停電", mixseg)
+```
+---
+
+### 詞袋模型(Bag of Words) 與詞頻計算
+
+```{r, echo=FALSE}
+wiki.apple.vec
+```
+
+
+```{r}
+library(tm)
+myCorpus <- Corpus(VectorSource(wiki.apple.vec))
+# convert to lower case
+myCorpus <- tm_map(myCorpus, content_transformer(function(u)tolower(u)))
+# remove punctuation
+myCorpus <- tm_map(myCorpus, content_transformer(function(u)removePunctuation(u)))
+# Strip extra whitespace
+myCorpus <- tm_map(myCorpus, content_transformer(function(u)stripWhitespace(u)))
+# remove numbers
+myCorpus <- tm_map(myCorpus, content_transformer(function(u)removeNumbers(u)))
+# remove stopwords from corpus
+myCorpus <- tm_map(myCorpus, content_transformer(function(u)removeWords(u,stopwords("english"))))
+
+# stemming & completion
+myCorpusCopy <- myCorpus
+myCorpus <- tm_map(myCorpus, stemDocument)
+
+# completion (bug patch)
+stemCompletion_mod <- function(x,dict=dictCorpus) {
+  stripWhitespace(paste(stemCompletion(unlist(strsplit(as.character(x)," ")),dictionary=dict, type="shortest"),sep="", collapse=" "))
+}
+
+myCorpus <- tm_map(myCorpus, content_transformer(function(u)stemCompletion_mod(u, dict=myCorpusCopy)))
+
+# Building a Term-Document Matrix
+# 稀疏矩陣（Sparse matrix），是其元素大部分為零的矩陣
+myTdm <- DocumentTermMatrix(myCorpus)
+dtm_corpus <- as.matrix(myTdm)
+
+# 每個欄的總合剛好就是整個語料庫的word count
+sort(colSums(dtm_corpus))
+```
+---
+
+### TF-IDF
+TF-IDF的主要思想是：如果某個詞或短語在一篇文章中出現的頻率TF高，並且在其他文章中很少出現， <br>
+則認為此詞或者短語具有很好的類別區分能力，適合用來分類。
+*透過結巴R套件即可以做到TF-IDF的計算*
+```{r}
+mixseg <- worker()
+
+# 取得IDF並存於工作目錄下
+get_idf(wiki.apple.list, path = "idf.txt")
+tokenEngine <- worker("keywords", idf = "idf.txt")
+# 以文件1為例，計算TFIDF，其中log為natural logarithms
+for(i in 1:length(wiki.apple.list)){
+  print(vector_keywords(wiki.apple.list[[i]], tokenEngine))
+}
+```
+
+
+*TF-IDF驗算*
+```{r}
+tf <- table(wiki.apple.list[[3]])
+
+idf.case.1 <- log(length(wiki.apple.list)/length(grep("largest",wiki.apple.list)))
+tfidf.case.1 <- tf["largest"]*idf.case.1
+
+idf.case.2 <- log(length(wiki.apple.list)/length(grep("world",wiki.apple.list)))
+tfidf.case.2 <- tf["world"]*idf.case.2
+```
+---
+
+字詞關聯意味著每個字詞之間的關聯性，通常是計算詞與詞的相關係數(Correlation Coefficient)，介於-1與+1之間。
+
+概念是出現Text的文章中也同時出現Mining的情況越多，相關係數越高；表示他們的關聯性越強。
++ 透過tm套件的findAssocs函數，可以查詢相關性較高的詞
+```{r}
+#Associated 
+cor(dtm_corpus)
+findAssocs(myTdm, 'steve' , 0.25)
+findAssocs(myTdm, 'apple' , 0.25)
+```
+---
+
+### 文字雲
+標籤雲或文字雲是關鍵詞的視覺化描述，用於彙總用戶生成的標籤或一個網站的文字內容。標籤一般是獨立的辭彙，常常按字母順序排列，其重要程度又能通過改變字體大小或顏色來表現
+一般的文字雲較單純，綜合文章的詞頻取前n個排名，依詞頻高低顯示不同大小。若講究多篇文章中，較具代表性的文字雲，則使用TF-IDF概念依重要程度製圖。
+
+*以下主要介紹各種文字雲套件的使用方式*
+```{r}
+# 文字雲1
+library(wordcloud)
+freqs <- colSums(dtm_corpus)
+words <- names(freqs)
+wordcloud(words,freqs, min.freq = 1)
+
+# 文字雲2-1
+library(rWordCloud)
+content <- c('test test1 test2 hi ho hurray hi hurray ho ho ho ho','ho hi uh ho','test')
+label <- c('a1','a2','a3')
+d3TextCloud(content = content, label = label)
+
+# 文字雲2-2
+text <- c('d3','wordcloud','impressive','experiment','htmlwidgets','myfirstwidget')
+size <- c(25,20,13,9,6,1)
+df <- data.frame(text,size)
+d3Cloud(text = text, size = size)
+
+# 文字雲3
+library(d3wordcloud)
+d3wordcloud(words,freqs)
+```
+---
+
+### 集群分析
++ 階層式(Hierarchical)分群應用於文字資料
++ 將*文字*分群
+```{r}
+tdm_corpus <- t(dtm_corpus)
+tdm_corpus <- tdm_corpus[nchar(rownames(tdm_corpus))!=1,]
+tdm_corpus <- as.TermDocumentMatrix(tdm_corpus, weight = weightTf)
+tdm_corpus <- removeSparseTerms(tdm_corpus, sparse=0.7)
+
+dist_tdm_corpus <- dist(as.matrix(tdm_corpus))
+fit <- hclust(dist_tdm_corpus, method="ward.D")
+plot(fit)
+
+```
