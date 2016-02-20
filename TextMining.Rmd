@@ -244,10 +244,11 @@ tfidf.case.2 <- tf["world"]*idf.case.2
 字詞關聯意味著每個字詞之間的關聯性，通常是計算詞與詞的相關係數(Correlation Coefficient)，介於-1與+1之間。
 
 概念是出現Text的文章中也同時出現Mining的情況越多，相關係數越高；表示他們的關聯性越強。
+
 + 透過tm套件的findAssocs函數，可以查詢相關性較高的詞
 ```{r}
 #Associated 
-cor(dtm_corpus)
+cor(dtm_corpus)[1:10, 1:30]
 findAssocs(myTdm, 'steve' , 0.25)
 findAssocs(myTdm, 'apple' , 0.25)
 ```
