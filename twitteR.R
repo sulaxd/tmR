@@ -56,9 +56,6 @@ myCorpus <- tm_map(myCorpus, content_transformer(function(u)stripWhitespace(u)))
 # keep a copy of corpus to use later as a dictionary for stem completion
 myCorpusCopy <- myCorpus
 # stem words
-
-
-
 myCorpus <- tm_map(myCorpus, stemDocument)
 content(myCorpus[[12]])
 
