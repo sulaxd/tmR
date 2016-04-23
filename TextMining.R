@@ -440,7 +440,8 @@ retain <- c("mining")
 #' + 透過USERPATH可取得**使用者自定義詞庫**的路徑
 #' + 修改完成後，重新載入斷詞引擎
 ## ------------------------------------------------------------------------
-# edit_dict()
+# !!windows+記事本正常使用，但mac無法？可能是RStudio版本問題
+edit_dict()
 USERPATH
 # dict.fix <- read.csv(USERPATH, header = F, stringsAsFactors = F)
 # write.table(data.frame(c(dict.fix[,1], "全台大")), row.names = F, col.names = F, quote = F, file = USERPATH)
@@ -503,6 +504,7 @@ url <- "https://play.google.com/store/apps/details?id=com.facebook.katana&hl=zh-
 
 # https的website會有SSL的認證問題，加上參數ssl.verifypeer=False即可
 # windows常有中文亂碼問題，不過有時在資料解析過後就會正常
+# !!時有第一次跳無法連線，第二次正常getURL的狀況
 data <- getURL(url, ssl.verifypeer = FALSE)
 data <- htmlParse(data, encoding = "UTF-8")
 
@@ -577,8 +579,7 @@ print(result)
 ## ------------------------------------------------------------------------
 library(jiebaR)
 mixseg = worker()
-resultSegmentCorpus <- sapply(result, segment, mixseg)
-resultSegmentWords <- do.call(c,resultSegmentCorpus)
+resultSegmentWords <- segment(result, mixseg)
 tail(sort(table(resultSegmentWords)),50)
 
 #' 
