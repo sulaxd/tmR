@@ -579,7 +579,9 @@ print(result)
 ## ------------------------------------------------------------------------
 library(jiebaR)
 mixseg = worker()
-resultSegmentWords <- segment(result, mixseg)
+# windows可能有編碼問題，試試iconv(result, "utf8", "utf8")
+resultSegmentCorpus <- sapply(result, segment, mixseg)
+resultSegmentWords <- do.call(c,resultSegmentCorpus)
 tail(sort(table(resultSegmentWords)),50)
 
 #' 
