@@ -16,35 +16,13 @@
 #' 
 ## ---- include=FALSE, , message=FALSE-------------------------------------
 library(ngram)
-help_console <- function(topic, format=c("text", "html", "latex", "Rd"),
-                         lines=NULL, before=NULL, after=NULL) {  
-  format=match.arg(format)
-  if (!is.character(topic)) topic <- deparse(substitute(topic))
-  helpfile = utils:::.getHelpFile(help(topic))
-
-  hs <- capture.output(switch(format, 
-                              text=tools:::Rd2txt(helpfile),
-                              html=tools:::Rd2HTML(helpfile),
-                              latex=tools:::Rd2latex(helpfile),
-                              Rd=tools:::prepare_Rd(helpfile)
-                              )
-                      )
-  hs <- gsub("Process","ngram{ngram}", hs) # 只針對ngram
-  hs <- hs[-grep("R.css", hs)]
-  hs <- gsub("<(\\/|)code>","`",hs)
-  if(!is.null(lines)) hs <- hs[lines]
-  hs <- c(before, hs, after)
-  cat(hs, sep="\n")
-  invisible(hs)
-}
-
 
 #' 
 #' ## 套件安裝及載入
 #' 
 ## ---- eval=FALSE---------------------------------------------------------
-## install.packages('ngram')
-## library(ngram)
+install.packages('ngram')
+library(ngram)
 
 #' ![安裝套件](IMG/installPackages.png)
 #' 
@@ -70,15 +48,12 @@ help_console <- function(topic, format=c("text", "html", "latex", "Rd"),
 #' ---
 #' 
 ## ---- eval=FALSE---------------------------------------------------------
-## ?ngram
-## help(ngram)
+?ngram
+help(ngram)
 
 #' 
 #' ---
 #' 
-## ---- echo=FALSE, results='asis'-----------------------------------------
-help_console(ngram, "html")
-
 #' 
 #' ---
 #' 
